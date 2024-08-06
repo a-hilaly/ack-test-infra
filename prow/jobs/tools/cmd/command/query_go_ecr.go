@@ -36,7 +36,7 @@ func init() {
 	rootCmd.AddCommand(queryCmd)
 }
 
-// compareVersions() returns true if v1 is greater than v2
+// rename to something
 func compareVersions(v1, v2 string) bool {
 	sem1, err := semver.Parse(v1)
 	checkError(err)

@@ -9,18 +9,21 @@ import (
 	"os"
 	"strings"
 	"time"
+
 	"github.com/google/go-github/v63/github"
 )
 
-const (
-	sourceOwner   = "aws-controllers-k8s"
-	sourceRepo    = "test-infra"
-	commitMessage = ""
+func ptrStr(s string) *string { return &s }
+
+var (
+	sourceOwner   = ptrStr("aws-controllers-k8s")
+	sourceRepo    = ptrStr("test-infra")
+	commitMessage = ptrStr("")
 	commitBranch  = flag.String("commit-branch", "", "Name of branch to create the commit in. If it does not already exists, it will be created using the `base-branch` parameter")
 	repoBranch    = flag.String("repo-branch", "", "Name of the repository where the changes in the pull request were made. This field is required for cross-repository pull requests if both repositories are owned by the same organization")
 	baseBranch    = flag.String("base-branch", "main", "Name of branch to create the `commit-branch` from.")
-	prRepoOwner   = "ack-bot"
-	prRepo        = "test-infra"
+	prRepoOwner   = ptrStr("ack-bot")
+	prRepo        = ptrStr("test-infra")
 	prBranch      = flag.String("merge-branch", "main", "Name of branch to create the PR against (the one you want to merge your branch in via the PR).")
 	prSubject     = flag.String("pr-title", "", "Title of the pull request. If not specified, no pull request will be created.")
 	prDescription = flag.String("pr-text", "", "Text to put in the description of the pull request.")

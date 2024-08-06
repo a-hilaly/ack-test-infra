@@ -19,15 +19,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-
 var (
 	optRepositoryName string
 )
 
 var buildProwCmd = &cobra.Command{
-	Use: "build-prow-images",
+	Use:   "build-prow-images",
 	Short: "build-prow-images - builds prow images in image_config.yaml and pushes them to ack-infra public ecr",
-	RunE: buildProwImages,
+	RunE:  buildProwImages,
 }
 
 func init() {
@@ -38,15 +37,14 @@ func init() {
 	rootCmd.AddCommand(buildProwCmd)
 }
 
-
 func kanikoExecutor(version, dockerfile, destination string) {
 	// BuildImage("my-app", "my-app-0.0.9")
 	app := "/kaniko/executor"
-	args := []string {
+	args := []string{
 		"--dockerfile",
-	 	dockerfile,
+		dockerfile,
 		"--destination",
-		destination+version,
+		destination + version,
 		"--context",
 		"git://github.com/michaelhtm/aws-docker.git",
 		"--cleanup",
@@ -69,11 +67,10 @@ func checkError(err error) {
 	}
 }
 
-func retrieveImageTags() (imageTags [][]string) {
+func listRepositoryImages(repositoryName string, registryID string) ([]types.ImageDetail, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
 	if err != nil {
-		log.Fatalf("failed to load config, %v", err)
-		return
+		return nil, fmt.Errorf("couldn't load AWS config: %v", err)
 	}
 
 	svc := ecrpublic.NewFromConfig(cfg)
@@ -96,8 +93,7 @@ func retrieveImageTags() (imageTags [][]string) {
 	for describeImagesOutput.NextToken != nil {
 		describeImagesOutput, err = svc.DescribeImages(context.TODO(), describeImagesInput)
 		if err != nil {
-			log.Fatalf("failed to describe images, %v", err)
-			return
+			return nil, fmt.Errorf("failed to decsribe images %v", err)
 		}
 
 		imageDetails = append(imageDetails, describeImagesOutput.ImageDetails...)
@@ -105,23 +101,7 @@ func retrieveImageTags() (imageTags [][]string) {
 		describeImagesInput.NextToken = describeImagesOutput.NextToken
 	}
 
-	// sort them from oldest to newest
-	sort.Slice(imageDetails, func(i, j int) bool {
-		return imageDetails[i].ImagePushedAt.Unix() < imageDetails[j].ImagePushedAt.Unix()
-	})
-
-	// version_length := len(describeImagesOutput.ImageDetails)
-
-	// fmt.Println(describeImagesOutput.ImageDetails[version_length-1].ImageTags)
-
-	imageTags = make([][]string, 0, 120)
-
-	for _, imageTag := range imageDetails {
-		imageTags = append(imageTags, imageTag.ImageTags)
-	}
-
-	return imageTags
-
+	return imageDetails, nil
 }
 
 func compareImageTags(desiredImageVersion string, imageVersions [][]string) (highestVersion string, needUpgrade bool) {
@@ -166,7 +146,7 @@ func compareImageTags(desiredImageVersion string, imageVersions [][]string) (hig
 	if needUpgrade {
 		kanikoExecutor(desiredImageVersion, "Dockerfile."+imageName, "399481058530.dkr.ecr.us-west-2.amazonaws.com/prow:")
 	}
-	
+
 	return highestVersionSem.String(), needUpgrade
 }
 
@@ -175,14 +155,14 @@ func buildProwImages(cmd *cobra.Command, args []string) error {
 	// configure stuff
 	imageTags := retrieveImageTags()
 
-	imagesConfigData, err := os.ReadFile("./images_config.yaml") 
+	imagesConfigData, err := os.ReadFile("./images_config.yaml")
 	if err != nil {
 		log.Fatalf("failed to read file, %v", err)
 		return err
 	}
 
 	var imagesConfig *ImagesConfig
-	if err :=  yaml.Unmarshal(imagesConfigData, &imagesConfig); err != nil {
+	if err := yaml.Unmarshal(imagesConfigData, &imagesConfig); err != nil {
 		return fmt.Errorf("unable to unmarshal %s. %s", imagesConfigData, err)
 	}
 

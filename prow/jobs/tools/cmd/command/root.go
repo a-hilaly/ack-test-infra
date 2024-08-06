@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	appName      = "ack-build-tools"
-	appShortDesc = "prow-patcher - patch prow images, build, and release"
-	appLongDesc  = `prow-patcher
+	appName             = "ack-build-tools"
+	appShortDescription = "prow-patcher - patch prow images, build, and release"
+	appLongDescription  = `prow-patcher
 	
 	A tool to patch prow jobs when there is a change to test infra, or when there's a new go version pushed to ECR`
 )
@@ -20,8 +20,8 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:          appName,
-	Short:        appShortDesc,
-	Long:         appLongDesc,
+	Short:        appShortDescription,
+	Long:         appLongDescription,
 	SilenceUsage: true,
 }
 
